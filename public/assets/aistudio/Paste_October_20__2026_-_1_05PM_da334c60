@@ -1,0 +1,774 @@
+# MASTER BUILD PROMPT — LOCAL-FIRST AI NOTES MAKER
+
+## 1. Your role and objective
+
+Act as a senior full-stack engineer, product designer, AI systems architect, and embedded-device integration engineer.
+
+Design and build a complete, polished, production-minded web application for my personal AI Notes Maker device.
+
+Do not merely generate a static UI, landing page, prototype, or collection of disconnected components. Build a functional application with persistent local data, real interactions, a coherent data model, a working organizer, an audio processing pipeline, and a clear path to hardware integration.
+
+You have freedom to choose the programming languages, frameworks, libraries, storage technologies, architecture, and tools best suited to the requirements. Think through the trade-offs yourself. You may use common, proven technologies where appropriate, but do not blindly follow a prescribed stack if a better solution exists.
+
+Prioritize reliability, offline operation, privacy, maintainability, excellent usability, and a genuinely useful note-organizing experience.
+
+If the project already contains code, inspect it first and preserve useful existing functionality. Do not unnecessarily rewrite working code.
+
+## 2. Product concept
+
+The application accompanies a physical voice-notes device built with:
+
+- ESP32-DevKit V1
+- INMP441 I²S microphone
+- SPI microSD card reader
+- 0.96-inch OLED display
+- Physical push buttons
+
+The device already has offline recording and local recording management implemented. Do not assume you need to rebuild the device firmware.
+
+The device records meetings, lectures, ideas, personal thoughts, reminders, and other spoken information. Recordings are transferred to the web application over local Wi-Fi.
+
+The application turns these recordings into organized, searchable, editable notes and helps users build a long-term personal knowledge library.
+
+The application must also support importing audio files manually, so it remains useful when the physical device is unavailable.
+
+## 3. Non-negotiable architecture: local-first and offline-capable
+
+The application must work without an application backend or remote database for normal operation.
+
+Treat the user's browser or installed web app as the primary application environment.
+
+Persist locally:
+
+- Original audio recordings
+- Recording metadata
+- Transcripts
+- AI-generated summaries
+- User-edited notes
+- Projects and collections
+- Tags and saved views
+- Tasks and reminders
+- Audio bookmarks
+- Transcript timestamps
+- Related-note links
+- Flashcards, quizzes, and revision materials
+- Processing queues and job states
+- User preferences
+- Device information and synchronization history
+- Backup and import metadata
+
+Choose an appropriate combination of durable browser storage and local file storage. Evaluate IndexedDB, the Origin Private File System, and other suitable browser capabilities.
+
+Do not store large audio files as base64 strings in the main database. Avoid unnecessary duplication of audio and transcript data.
+
+The application must:
+
+1. Load its previously cached interface without an internet connection.
+2. Allow users to browse, search, edit, tag, archive, and organize existing notes offline.
+3. Play locally stored audio offline.
+4. Import recordings from the physical device when a supported local network connection is available.
+5. Queue transcription and summarization jobs while offline.
+6. Resume pending work when connectivity returns.
+7. Preserve changes across reloads and application restarts.
+8. Provide visible storage usage and backup controls.
+9. Offer complete data export and restore functionality.
+10. Warn users about storage limitations and failed backups.
+
+Implement a proper offline application cache and a reliable local persistence layer. Do not rely on in-memory state or browser cache alone for user data.
+
+Request persistent storage where supported, handle quota errors, and communicate any storage limitations clearly.
+
+An installed web app on one device and the same app on another device will have separate local databases unless synchronization is implemented. Make this limitation explicit and provide a sensible export/import mechanism.
+
+### AI availability modes
+
+Implement a clear distinction between:
+
+**Offline mode**
+- Existing notes and recordings remain fully accessible.
+- Users can edit, search, organize, play, bookmark, archive, and export data.
+- New recordings can wait in a processing queue.
+- Previously generated summaries and other AI results remain available.
+- Any optional local AI capabilities should be clearly identified as such.
+
+**Connected AI mode**
+- When internet is available, recordings can be transcribed and summarized through Groq.
+- Results are saved into the local database.
+- If the connection fails, the application preserves the recording and resumes later.
+
+Do not claim that cloud AI works offline. If practical, design an optional future integration for locally running speech recognition and language models.
+
+## 4. Technology selection
+
+Choose the architecture that best satisfies the requirements. Explain important decisions briefly in the project documentation.
+
+You may consider a PWA, a client-side application framework, a browser-native database, a local search engine, and a background processing mechanism.
+
+Do not introduce a permanent backend database, user-account service, or cloud file store unless it is genuinely necessary for an explicitly optional feature.
+
+If a small server-side proxy is required for secure API-key handling, keep it stateless with respect to the user's notes and recordings wherever practical.
+
+The application must be usable as a locally installed web app, not just a website that requires a network connection every time it opens.
+
+## 5. Design and user experience
+
+Build a polished, premium-feeling productivity application.
+
+The design should feel like a thoughtful combination of a modern notes editor, an audio workspace, a personal knowledge base, and an AI-powered organizer.
+
+Use good typography, balanced spacing, restrained colors, subtle borders, consistent icons, smooth but restrained animations, and excellent responsive behavior.
+
+Support desktop, tablet, and mobile layouts.
+
+Provide light and dark themes, keyboard shortcuts, accessible controls, useful empty states, loading indicators, clear errors, and confirmation for destructive actions.
+
+Do not make the interface look like a generic administrative dashboard. It should feel like a product designed specifically for voice-first note-taking.
+
+### Main navigation
+
+Include the following navigation areas:
+
+- Home / Overview
+- Inbox
+- All Notes
+- Projects
+- Tasks and Reminders
+- Audio Library
+- Related Notes / Knowledge Graph
+- Study and Revision
+- Archive
+- Device and Sync
+- Settings
+
+Use a responsive sidebar on desktop and an appropriate compact navigation pattern on mobile.
+
+### Home dashboard
+
+Display useful information such as:
+
+- Recent recordings
+- Notes awaiting review
+- Recordings waiting for transcription
+- Failed processing jobs
+- Active projects
+- Open tasks
+- Upcoming reminders
+- Recent audio bookmarks
+- Storage usage
+- Device connection status
+- Last successful import
+- Quick actions
+
+Make dashboard cards interactive and navigate to the relevant data.
+
+Do not display fabricated live device status or fake processing results. Clearly distinguish demonstration data from actual data when the application is running in a development or demo mode.
+
+## 6. Audio import and recording management
+
+Support:
+
+- Importing audio files through a file picker
+- Drag-and-drop audio import
+- Importing recordings from the ESP32
+- Viewing recording duration and file size
+- Playing audio through a local audio player
+- Renaming recordings
+- Editing recording metadata
+- Deleting recordings with confirmation
+- Reprocessing recordings
+- Viewing processing history
+- Exporting original recordings
+- Recovering interrupted imports
+
+Preserve each recording's identity and original creation time where available.
+
+Use unique stable IDs, not filenames alone.
+
+Prevent duplicate imports by comparing recording IDs when available and using file fingerprints or other suitable duplicate detection when needed. Duplicate detection should suggest matches rather than silently deleting or merging recordings.
+
+Never delete a recording from the SD card merely because an upload was attempted. The device and app should use explicit transfer acknowledgements and clearly defined retention behavior.
+
+## 7. ESP32 local synchronization
+
+Design a hardware integration layer that can work with the existing ESP32 firmware.
+
+Do not assume a particular firmware API, IP address, file format, or transfer protocol without inspecting the existing implementation or documenting the assumption.
+
+If the firmware is available, inspect it and adapt the application to the actual protocol. If it is not available, define a clean integration interface that can be configured later.
+
+The application should support:
+
+- Discovering or connecting to the device through a supported local Wi-Fi mechanism
+- Manually entering the device address when discovery is unavailable
+- Requesting a list of recordings
+- Displaying filenames, recording IDs, timestamps, durations, and transfer status
+- Selecting recordings for import
+- Showing transfer progress
+- Retrying interrupted transfers
+- Resuming partial transfers if the device supports them
+- Detecting duplicate imports
+- Confirming successful local storage
+- Showing recordings that remain on the SD card
+- Displaying device and synchronization errors
+- Maintaining an import history
+
+Prefer a local HTTP API or another practical local transfer mechanism compatible with the existing firmware.
+
+Account for browser security restrictions on local-network requests, CORS, permissions, mixed-content restrictions, and HTTPS requirements. Provide a documented manual-import fallback if direct browser-to-device communication is unavailable in a target browser.
+
+Do not claim that seamless device discovery works in every browser.
+
+## 8. Audio bookmarks and tap-to-replay
+
+Implement audio bookmarks as a first-class feature.
+
+A bookmark identifies an important point in a recording and can originate from either the ESP32's physical buttons or the web app.
+
+Each bookmark should store:
+
+- Stable bookmark ID
+- Recording ID
+- Timestamp in milliseconds
+- Optional label
+- Optional color or category
+- Creation source: device or application
+- Optional linked transcript segment
+- Creation time
+
+If the ESP32 firmware can mark timestamps during recording, integrate those markers with the imported audio. If the current firmware does not support them, define the metadata contract and provide a way to add bookmarks in the app.
+
+The audio player must include:
+
+- Play and pause
+- Seek bar
+- Current time and total duration
+- Playback speed controls
+- Skip backward and forward
+- Bookmark markers on the timeline
+- A bookmark list
+- Add, rename, and delete bookmark actions
+- Jump directly to a bookmark
+- Highlight the active bookmark when seeking
+- Keyboard-accessible playback controls
+
+### Transcript synchronization
+
+When a transcript contains timestamps, display transcript segments in chronological order.
+
+Clicking a timestamped segment must seek the audio player to the corresponding position.
+
+While audio is playing, highlight the currently active transcript segment when reliable timing data is available.
+
+Allow users to create bookmarks from transcript segments and navigate from bookmarks back to the relevant transcript.
+
+Preserve timestamps when editing transcript text. If the text is changed, keep the original segment boundaries unless the user explicitly edits the timing or requests realignment.
+
+Never fabricate precise sentence timestamps if the transcription service did not provide suitable timing data. When precise alignment is unavailable, use clearly labeled approximate timing or provide playback without transcript highlighting.
+
+## 9. The Smart Inbox
+
+The Inbox is the primary destination for newly imported recordings.
+
+Every recording should have a visible lifecycle status, for example:
+
+- Imported
+- Awaiting transcription
+- Transcribing
+- Awaiting organization
+- Ready for review
+- Filed
+- Failed
+- Archived
+
+The Inbox should surface:
+
+- New recordings
+- Incomplete transcripts
+- Incomplete summaries
+- Failed processing jobs
+- Notes without a project
+- Possible duplicates
+- Suggested related notes
+- Suggested projects
+- Pending task approvals
+
+Allow bulk actions such as assigning a project, applying tags, archiving notes, retrying processing, and marking notes as reviewed.
+
+Bulk operations must show a clear confirmation or undo mechanism where appropriate.
+
+A recording must not disappear from the Inbox simply because an AI request failed.
+
+## 10. The organizer: core product logic
+
+Build a structured organizer rather than a folder system that allows arbitrary nesting and uncontrolled AI-generated categories.
+
+Keep these concepts separate:
+
+**Inbox:** new and unreviewed material.
+
+**Notes:** the actual editable content associated with a recording or manually created note.
+
+**Projects:** persistent collections of notes around a longer-term goal or subject.
+
+**Tags:** reusable labels that can apply across multiple projects.
+
+**Saved views / Sections:** dynamic filters such as Today's Notes, Meeting Notes, Ideas, Lectures, Unfinished, Bookmarks, or Recently Edited.
+
+**Archive:** a status that hides older or completed notes from the main active views without removing them from search.
+
+Do not create a new folder or project merely because a note has a new title.
+
+### Organizer pipeline
+
+After a recording is transcribed:
+
+1. Generate a title and summary.
+2. Identify the likely note type.
+3. Extract key points and action items.
+4. Suggest reusable tags.
+5. Compare the note against existing projects.
+6. Retrieve potentially related existing notes.
+7. Detect possible duplicate recordings or notes.
+8. Produce organization suggestions.
+9. Save the results locally.
+10. Present uncertain decisions for user review.
+
+### Project selection rules
+
+Provide the organizer with the actual available project IDs, names, and descriptions.
+
+Prefer an existing project when the note clearly fits.
+
+Allow the AI to suggest a new project, but do not create one automatically when an existing project is a plausible match.
+
+If confidence is low, leave the note in the Inbox and ask the user.
+
+Never let the model invent project IDs, note IDs, or other database identifiers. Validate all references against the local database before saving them.
+
+Manual user decisions always take precedence over AI suggestions.
+
+### User-friendly review screen
+
+For every newly processed recording, show:
+
+- Editable title
+- Summary preview
+- Suggested note type
+- Suggested project
+- Suggested tags
+- Related notes
+- Extracted action items
+- Possible duplicates
+- Processing warnings, if any
+
+Provide actions to:
+
+- Accept all safe suggestions
+- Change the project
+- Add or remove tags
+- Approve or reject action items
+- Open related notes
+- Keep in Inbox
+- Save and file
+- Archive
+- Retry processing
+
+Support an optional setting for automatically filing high-confidence matches. Conservative review should be the default.
+
+### Duplicate and related-note logic
+
+Related notes and duplicate notes are different concepts.
+
+A duplicate detector should identify likely copies of the same recording or content.
+
+A related-note system should find useful connections between distinct notes that discuss similar ideas.
+
+Never automatically merge separate notes based only on semantic similarity.
+
+Start with local text search, shared tags, title similarity, and metadata. Later, support semantic embeddings and a local similarity index.
+
+Allow users to confirm, dismiss, or manually create relationships.
+
+## 11. Note editor and knowledge library
+
+Build a full note-detail workspace containing:
+
+- Title
+- Editable summary
+- Full transcript
+- Original audio player
+- Timestamped transcript segments
+- Bookmarks
+- Key points
+- Extracted action items
+- Tags
+- Project assignment
+- Related notes
+- Recording metadata
+- Creation and edit dates
+- Processing history
+
+Support manually created notes that do not have recordings.
+
+Support editing and deleting individual transcript segments while preserving timing metadata when possible.
+
+Provide useful actions such as:
+
+- Copy transcript
+- Copy summary
+- Export as Markdown
+- Export as plain text
+- Export audio
+- Regenerate summary
+- Generate a different summary style
+- Generate meeting minutes
+- Generate study notes
+- Generate an outline
+- Create flashcards
+- Create a quiz
+- Extract tasks
+- Find related notes
+- Add a bookmark
+- Move to another project
+- Archive and restore
+
+Use autosave with visible save status and recovery from interrupted editing.
+
+## 12. Universal search and related notes
+
+Implement a fast local search across:
+
+- Titles
+- Summaries
+- Transcripts
+- Tags
+- Project names
+- Task descriptions
+- Bookmark labels
+
+Support filtering by date, note type, project, tag, archive state, and processing status.
+
+Search must work offline and return useful results without calling an external API.
+
+Later, add optional semantic search that can find related concepts even when exact words differ.
+
+### Ask My Notes
+
+Build an interface where users can ask questions such as:
+
+- What ideas did I have about battery life?
+- What did I decide in my last project meeting?
+- Which lectures mention a particular concept?
+- What tasks did I promise to complete?
+- How has my project plan changed over time?
+
+The system should retrieve relevant local notes and generate answers grounded in their content.
+
+Show source citations linking to the exact notes and, when available, the corresponding audio timestamps.
+
+Distinguish direct quotations and explicit evidence from AI inference. If there is insufficient evidence, say so.
+
+Support a connected AI implementation using the user's configured provider. Design an optional local-model interface for future offline answering, but do not pretend that remote AI requests can run without internet.
+
+## 13. Tasks, reminders, and follow-ups
+
+Extract possible action items from transcripts.
+
+For each task, support:
+
+- Title
+- Description
+- Completion state
+- Due date, if explicitly stated or confirmed
+- Priority
+- Linked source note
+- Linked transcript segment or timestamp
+- Project
+- Creation source
+- Reminder configuration
+
+The user must be able to accept, edit, or reject extracted tasks.
+
+Do not invent deadlines or interpret casual statements as definite commitments.
+
+Implement reminders using supported browser capabilities, and clearly explain when notifications require permissions, a running application, or additional platform support.
+
+Offline task creation and editing must work even if notifications cannot currently be delivered.
+
+## 14. Study and revision tools
+
+Allow users to convert lectures, classes, and other suitable notes into:
+
+- Flashcards
+- Quizzes
+- Revision sheets
+- Key definitions
+- Important concepts
+- Question-and-answer lists
+- Spaced-repetition review sessions
+
+Link generated study materials back to their source note and transcript.
+
+Allow users to edit or remove incorrect cards.
+
+Keep study materials locally and available offline once generated.
+
+If a model is required to generate new material, queue that work until the selected AI provider is available.
+
+## 15. AI provider integration
+
+Integrate Groq as the initial online AI provider.
+
+Use a configurable model-selection layer rather than scattering model IDs throughout the application.
+
+Support these initial model roles, subject to current provider availability:
+
+- Speech-to-text: `whisper-large-v3-turbo`
+- Structured summarization and organization: `openai/gpt-oss-120b`
+
+Verify the current API documentation, supported response formats, file-size limits, and model availability during implementation. Do not silently assume model identifiers will remain valid indefinitely.
+
+### Transcription workflow
+
+1. Confirm the audio file is available locally.
+2. Create a persistent processing job.
+3. Send audio to the configured transcription service when online.
+4. Capture the transcript, language, timestamps, and supported metadata.
+5. Save the transcript locally as soon as the response is received.
+6. Mark transcription as complete.
+7. Continue to summarization and organization.
+8. Preserve partial progress if a later step fails.
+
+If a file exceeds the provider's limits, use an appropriate chunking or compression strategy. Preserve chunk ordering and avoid losing words at chunk boundaries.
+
+Do not concatenate long audio files into memory unnecessarily.
+
+### Summarization workflow
+
+Use structured outputs for:
+
+- Title
+- Summary
+- Note type
+- Key points
+- Action items
+- Tags
+- Project suggestion
+- Related-note suggestions
+- Questions or uncertainties
+
+Validate AI output against a schema before writing it into the local database.
+
+Keep the original transcript separate from generated and edited content.
+
+### Queue and retry system
+
+The processing queue must:
+
+- Work without internet
+- Resume when connectivity returns
+- Display current status
+- Support manual retry
+- Record errors
+- Avoid duplicate jobs
+- Avoid repeating successful stages unnecessarily
+- Support cancellation where safe
+- Allow users to delete a queued job with confirmation
+
+Never overwrite a user-edited summary without explicit approval.
+
+Never lose the source recording because a transcription or summarization request failed.
+
+### API-key security
+
+Do not hardcode a shared Groq key in frontend code, source control, or ESP32 firmware.
+
+For a personal prototype, consider a user-configured API key stored locally, with clear warnings that browser-accessible secrets are not equivalent to server-side secrets.
+
+For a public application, provide an optional secure, minimal server-side AI proxy. It should authenticate requests, apply reasonable limits, protect credentials, and avoid retaining recordings or notes unnecessarily.
+
+Keep the core library functional when no API key has been configured.
+
+## 16. Offline-first control centre
+
+Create a dedicated Device and Sync page.
+
+Display:
+
+- Device connection state
+- Last successful connection
+- Last import time
+- Pending imports
+- Transfer progress
+- Failed transfers
+- Pending AI jobs
+- Failed AI jobs
+- Storage usage
+- Available storage estimate where supported
+- Last backup time
+- Current AI provider and model configuration
+- Current application version
+
+Provide controls to:
+
+- Connect or disconnect a device
+- Retry imports
+- Retry processing
+- Pause or resume the processing queue
+- Export all user data
+- Import a backup
+- Verify a backup
+- Clear local data after explicit confirmation
+- Manage API settings
+- Inspect errors and processing history
+
+Use accurate status indicators derived from real state, not decorative connection indicators.
+
+## 17. Data backup, recovery, and portability
+
+Implement complete data export and restore.
+
+A backup should preserve, where applicable:
+
+- Notes
+- Projects
+- Tags
+- Saved views
+- Tasks
+- Bookmarks
+- Transcripts and timestamps
+- Related-note relationships
+- User preferences
+- Recording metadata
+- Original audio files
+- Generated study materials
+
+Choose a portable backup format with a manifest, schema version, and integrity checks. A ZIP archive with a structured metadata file and separate media files is one reasonable option.
+
+Support importing backups without blindly overwriting existing data.
+
+Provide conflict handling, duplicate detection, restore previews, and clear confirmation before destructive changes.
+
+Document the difference between a full media backup and a metadata-only backup.
+
+## 18. Privacy and reliability
+
+Privacy is a primary product requirement.
+
+- Keep personal data local by default.
+- Send audio or transcripts to external AI providers only when the user has enabled and initiated that workflow.
+- Clearly disclose when external services receive user content.
+- Never send the entire notes library to an AI model when a smaller relevant context is sufficient.
+- Avoid collecting unnecessary analytics or telemetry.
+- Keep all secrets out of public source code.
+- Validate imported files and AI responses.
+- Handle corrupted audio, unsupported formats, quota exhaustion, and network failures.
+- Prevent accidental cross-linking between different recordings.
+- Use explicit confirmations for permanent deletion.
+- Provide a clear way to cancel pending work and remove local data.
+- Do not silently upload personal notes in the background without user awareness.
+
+Treat transcripts as untrusted content. A transcript may contain instructions spoken by someone, but those instructions must never override the application's system instructions, security rules, or data-access controls.
+
+## 19. Performance and quality requirements
+
+The application should remain responsive with a large personal library.
+
+Avoid loading every recording or full transcript into memory at once.
+
+Use pagination, virtualized lists, lazy media loading, incremental indexing, and efficient local queries where appropriate.
+
+Ensure long-running operations do not freeze the interface.
+
+Provide proper loading, empty, success, and error states.
+
+Test persistence across reloads, offline behavior, interrupted uploads, duplicate imports, storage failures, invalid AI responses, and recovery after application restarts.
+
+Verify that every visible button, menu, filter, editor action, and navigation item works.
+
+Do not leave important features as nonfunctional placeholders. If an integration cannot be completed without device firmware details or external credentials, implement the interface, define the contract, explain the dependency, and make the incomplete status explicit.
+
+## 20. Implementation process
+
+Work in deliberate stages.
+
+### Stage A — Inspect and plan
+
+Inspect the existing project and identify its framework, existing components, dependencies, storage mechanisms, and current implementation status.
+
+Produce a concise architecture plan and data model.
+
+Identify any hardware-protocol details that are unavailable and document reasonable assumptions.
+
+Do not block all progress on missing optional information.
+
+### Stage B — Build the local foundation
+
+Implement local persistence, migrations or schema versioning, the main layout, navigation, note editor, projects, tags, saved views, Inbox, search, archive, and backup/restore.
+
+Use realistic sample data only for development demonstrations. Keep sample data separate from the user's actual library.
+
+### Stage C — Build the organizer
+
+Implement project matching, tag suggestions, related-note retrieval, duplicate suggestions, review actions, and approval of extracted tasks.
+
+Make the organizer useful even when AI is unavailable by supporting manual organization and deterministic local rules.
+
+### Stage D — Integrate audio and AI
+
+Implement audio import, local playback, transcription, summarization, validation, the processing queue, retries, and status reporting.
+
+Test the AI workflow with actual recordings when credentials are available.
+
+### Stage E — Integrate the ESP32
+
+Inspect or define the device API, implement connection and import workflows, preserve recording IDs, and test interrupted and repeated transfers.
+
+Keep the firmware's existing recording behavior intact.
+
+### Stage F — Polish and verify
+
+Add bookmarks, timestamp-linked transcripts, Ask My Notes, related-note views, study tools, reminders, accessibility improvements, and responsive layouts.
+
+Test the application in offline and online scenarios and fix functional problems before claiming completion.
+
+## 21. Deliverables
+
+Provide:
+
+1. A working application, not just a design mockup.
+2. Complete, organized source code.
+3. A clear project structure.
+4. Local data schemas and persistence logic.
+5. A configurable AI integration.
+6. The organizer and review workflow.
+7. Audio bookmarks and transcript-to-audio navigation.
+8. The smart Inbox and local search.
+9. Projects, tags, saved views, archive, and tasks.
+10. Backup and restore.
+11. Device synchronization integration or a documented integration adapter.
+12. Setup and development instructions.
+13. Instructions for installing and using the app offline.
+14. Environment configuration instructions for AI credentials.
+15. A list of tests performed and any outstanding limitations.
+
+Do not claim that a feature has been tested if it has not been tested.
+
+## 22. Final product principles
+
+Use these principles to resolve design decisions:
+
+- Local data is the source of truth.
+- The original recording is the source evidence.
+- The transcript is a representation of the recording.
+- The summary is an editable interpretation.
+- The project provides long-term context.
+- Tags and saved views provide flexible organization.
+- The Inbox handles uncertainty.
+- The user retains control over important organizational decisions.
+- AI suggestions must be reversible.
+- Failures must not destroy user data.
+- Offline functionality is a core requirement, not an optional enhancement.
+- The interface should minimize manual work without hiding important decisions.
+
+Begin by inspecting the project, planning the architecture, and then implementing the actual application in working increments. Choose the technical stack you believe is best, justify the major choices, and prioritize a reliable, complete core product over a large collection of superficial features.

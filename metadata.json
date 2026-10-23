@@ -1,0 +1,10 @@
+{
+  "name": "Awaaz",
+  "description": "Offline-capable companion for ESP32 and browser voice notes with AI transcription, smart organizer, audio bookmarks, and knowledge graph.",
+  "requestFramePermissions": [
+    "microphone"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
