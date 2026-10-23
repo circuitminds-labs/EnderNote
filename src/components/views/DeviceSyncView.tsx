@@ -34,11 +34,12 @@ import {
   CheckCircle,
   Terminal,
   AlertTriangle,
-  FolderOpen
+  FolderOpen,
+  Languages
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { esp32Service, ConnectionDiagnosis } from '../../services/esp32Service';
-import { Esp32DeviceInfo, Esp32FileItem } from '../../types';
+import { Esp32DeviceInfo, Esp32FileItem, TranscriptionLanguage } from '../../types';
 import { formatBytes, formatDuration } from '../../services/audioUtils';
 
 export const DeviceSyncView: React.FC = () => {
@@ -80,6 +81,7 @@ export const DeviceSyncView: React.FC = () => {
   const localPreviewUrlsRef = useRef<Map<string, string>>(new Map());
 
   // Sequential Streaming Sync State
+  const [syncLanguage, setSyncLanguage] = useState<TranscriptionLanguage>(settings.transcriptionLanguage || 'en');
   const [isSyncModalOpen, setIsSyncModalOpen] = useState(false);
   const [syncTotalCount, setSyncTotalCount] = useState(0);
   const [syncCurrentIndex, setSyncCurrentIndex] = useState(0);
@@ -472,9 +474,10 @@ export const DeviceSyncView: React.FC = () => {
    * - Stitch into Blob & save to IndexedDB / NotesMaker
    * - POST /api/sync/complete
    */
-  const handleStartSequentialSync = async () => {
+  const handleStartSequentialSync = async (languageOverride?: TranscriptionLanguage) => {
     if (selectedFilenames.length === 0) return;
 
+    const activeLanguage = languageOverride || syncLanguage;
     const token = pairedToken || 'guest_token';
     const total = selectedFilenames.length;
 
@@ -533,6 +536,7 @@ export const DeviceSyncView: React.FC = () => {
         const { note } = await importAudioFile(audioFile, {
           title: filename.replace(/\.[^/.]+$/, '').replace(/_/g, ' '),
           source: 'esp32',
+          language: activeLanguage,
           awaitCompletion: false,
         });
 
@@ -817,6 +821,38 @@ export const DeviceSyncView: React.FC = () => {
 
             {files.length > 0 && (
               <>
+                {/* Transcription Language Switcher: Strictly English or Hindi */}
+                <div className="flex items-center gap-1 bg-stone-100 dark:bg-stone-800/90 p-1 rounded-xl border border-stone-200/80 dark:border-stone-700/80 shadow-2xs">
+                  <span className="text-[11px] font-semibold text-stone-500 dark:text-stone-400 pl-2 pr-1 flex items-center gap-1.5 select-none">
+                    <Languages className="w-3.5 h-3.5 text-amber-500" />
+                    <span className="hidden sm:inline">Transcribe in:</span>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setSyncLanguage('en')}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                      syncLanguage === 'en'
+                        ? 'bg-amber-500 text-stone-950 shadow-xs ring-1 ring-amber-400'
+                        : 'text-stone-600 dark:text-stone-300 hover:text-stone-950 dark:hover:text-stone-100 hover:bg-stone-200/60 dark:hover:bg-stone-700/60'
+                    }`}
+                    title="Transcribe speech in English"
+                  >
+                    <span>English</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSyncLanguage('hi')}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                      syncLanguage === 'hi'
+                        ? 'bg-amber-500 text-stone-950 shadow-xs ring-1 ring-amber-400'
+                        : 'text-stone-600 dark:text-stone-300 hover:text-stone-950 dark:hover:text-stone-100 hover:bg-stone-200/60 dark:hover:bg-stone-700/60'
+                    }`}
+                    title="हिंदी में ट्रांसक्राइब करें (Transcribe speech in Hindi)"
+                  >
+                    <span>हिंदी (Hindi)</span>
+                  </button>
+                </div>
+
                 <button
                   onClick={handleSelectAll}
                   className="px-2.5 py-1.5 rounded-lg bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-300 text-xs font-medium transition-colors cursor-pointer"
@@ -825,7 +861,7 @@ export const DeviceSyncView: React.FC = () => {
                 </button>
 
                 <button
-                  onClick={handleStartSequentialSync}
+                  onClick={() => handleStartSequentialSync()}
                   disabled={selectedFilenames.length === 0}
                   className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-stone-900 text-stone-50 hover:bg-stone-800 dark:bg-stone-100 dark:text-stone-900 dark:hover:bg-stone-200 text-xs font-bold disabled:opacity-40 transition-all shadow-xs cursor-pointer"
                 >
@@ -1000,7 +1036,7 @@ export const DeviceSyncView: React.FC = () => {
                       type="button"
                       onClick={() => {
                         setSelectedFilenames([fileName]);
-                        handleStartSequentialSync();
+                        handleStartSequentialSync(syncLanguage);
                       }}
                       className="px-3.5 py-1.5 rounded-lg bg-stone-200/80 hover:bg-stone-300 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-800 dark:text-stone-200 text-xs font-semibold transition-colors cursor-pointer shrink-0"
                     >
@@ -1096,6 +1132,45 @@ export const DeviceSyncView: React.FC = () => {
                   <span>Completed</span>
                 </span>
               )}
+            </div>
+
+            {/* Language indicator & quick switch in modal */}
+            <div className="flex items-center justify-between p-3 rounded-2xl bg-stone-50 dark:bg-stone-800/60 border border-stone-200/80 dark:border-stone-700/80 text-xs">
+              <div className="flex items-center gap-2">
+                <Languages className="w-4 h-4 text-amber-500 shrink-0" />
+                <div>
+                  <div className="font-semibold text-stone-800 dark:text-stone-200">
+                    Transcription Language
+                  </div>
+                  <div className="text-[11px] text-stone-500 dark:text-stone-400">
+                    {syncLanguage === 'hi' ? 'Transcribing audio in Hindi (हिंदी)' : 'Transcribing audio in English'}
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center gap-1 p-0.5 rounded-lg bg-stone-200/70 dark:bg-stone-900 border border-stone-300/60 dark:border-stone-700/60">
+                <button
+                  type="button"
+                  onClick={() => setSyncLanguage('en')}
+                  className={`px-2 py-0.5 rounded-md text-[11px] font-bold transition-all cursor-pointer ${
+                    syncLanguage === 'en'
+                      ? 'bg-amber-500 text-stone-950 shadow-xs'
+                      : 'text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-200'
+                  }`}
+                >
+                  English
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSyncLanguage('hi')}
+                  className={`px-2 py-0.5 rounded-md text-[11px] font-bold transition-all cursor-pointer ${
+                    syncLanguage === 'hi'
+                      ? 'bg-amber-500 text-stone-950 shadow-xs'
+                      : 'text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-200'
+                  }`}
+                >
+                  हिंदी
+                </button>
+              </div>
             </div>
 
             {/* Error banner if stream broke */}

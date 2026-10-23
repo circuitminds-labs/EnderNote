@@ -139,9 +139,12 @@ export interface SyncLog {
   status: 'success' | 'partial' | 'failed';
 }
 
+export type TranscriptionLanguage = 'en' | 'hi';
+
 export interface AppSettings {
   groqApiKey: string;
   transcriptionModel: string;
+  transcriptionLanguage?: TranscriptionLanguage; // Strictly 'en' | 'hi'
   summarizationModel: string;
   esp32DeviceIp: string;
   esp32PairToken?: string;

@@ -10,7 +10,8 @@ import {
   ProcessingJob, 
   SyncLog, 
   AppSettings, 
-  ActiveView 
+  ActiveView,
+  TranscriptionLanguage 
 } from '../types';
 import { dbService } from '../services/db';
 import { computeAudioFingerprint, getAudioDuration, createSyntheticWav, formatDuration } from '../services/audioUtils';
@@ -86,6 +87,7 @@ interface AppContextType {
       awaitCompletion?: boolean;
       durationSeconds?: number;
       fallbackTranscript?: string;
+      language?: TranscriptionLanguage;
       onProgress?: (step: string) => void;
     }
   ) => Promise<{ recording: Recording; note: Note }>;
@@ -155,6 +157,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [settings, setSettings] = useState<AppSettings>({
     groqApiKey: '',
     transcriptionModel: 'whisper-large-v3-turbo',
+    transcriptionLanguage: 'en',
     summarizationModel: 'openai/gpt-oss-120b',
     esp32DeviceIp: '192.168.4.1',
     autoFileHighConfidence: false,
@@ -620,12 +623,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     dbService.getStorageEstimate().then(setStorageStats);
 
     if (options?.awaitCompletion) {
-      const finalNote = await runSingleJob(job, recording, initialNote, options.onProgress, options.title);
+      const finalNote = await runSingleJob(job, recording, initialNote, options.onProgress, options.title, options.language);
       return { recording, note: finalNote };
     } else {
       // Kick off processing in background
       setTimeout(() => {
-        runSingleJob(job, recording, initialNote, options?.onProgress, options?.title);
+        runSingleJob(job, recording, initialNote, options?.onProgress, options?.title, options?.language);
       }, 100);
       return { recording, note: initialNote };
     }
@@ -637,7 +640,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     rec: Recording,
     targetNote: Note,
     onProgress?: (step: string) => void,
-    userProvidedTitle?: string
+    userProvidedTitle?: string,
+    language?: TranscriptionLanguage
   ): Promise<Note> => {
     try {
       job.status = 'processing';
@@ -649,10 +653,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       await dbService.saveNote(targetNote);
       setNotes(prev => prev.map(n => (n.id === targetNote.id ? { ...targetNote } : n)));
 
+      // Determine transcription language: option override || settings.transcriptionLanguage || 'en'
+      // Strictly restricted to 'en' or 'hi'
+      const targetLang: TranscriptionLanguage = (language === 'hi' || settings.transcriptionLanguage === 'hi') ? 'hi' : 'en';
+      const langLabel = targetLang === 'hi' ? 'Hindi' : 'English';
+
       onProgress?.(
         settings.groqApiKey 
-          ? 'Transcribing audio with Groq Whisper Cloud (whisper-large-v3-turbo)...' 
-          : 'Transcribing speech audio locally...'
+          ? `Transcribing audio in ${langLabel} with Groq Whisper Cloud (whisper-large-v3-turbo)...` 
+          : `Transcribing ${langLabel} speech locally...`
       );
 
       // 1. Transcription stage
@@ -664,7 +673,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         rec.audioBlob,
         settings.groqApiKey,
         settings.transcriptionModel,
-        targetNote.fullTranscript
+        targetNote.fullTranscript,
+        targetLang
       );
 
       targetNote.fullTranscript = transcription.fullTranscript;

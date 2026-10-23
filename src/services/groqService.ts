@@ -1,4 +1,4 @@
-import { TranscriptSegment, NoteType, TaskItem, Flashcard, QuizQuestion } from '../types';
+import { TranscriptSegment, NoteType, TaskItem, Flashcard, QuizQuestion, TranscriptionLanguage } from '../types';
 
 export interface GroqTranscriptionResult {
   fullTranscript: string;
@@ -28,11 +28,15 @@ export class GroqService {
     audioBlob: Blob,
     apiKey: string,
     model: string = 'whisper-large-v3-turbo',
-    fallbackTranscript?: string
+    fallbackTranscript?: string,
+    language: TranscriptionLanguage = 'en'
   ): Promise<GroqTranscriptionResult> {
+    // Strictly restrict transcripter language to 'en' or 'hi' - no other languages allowed
+    const cleanLanguage: TranscriptionLanguage = language === 'hi' ? 'hi' : 'en';
+
     if (!apiKey || !apiKey.trim() || !navigator.onLine) {
       // Local fallback / offline simulation using actual transcript text if available
-      return this.simulateOfflineTranscription(audioBlob, fallbackTranscript);
+      return this.simulateOfflineTranscription(audioBlob, fallbackTranscript, cleanLanguage);
     }
 
     try {
@@ -49,6 +53,7 @@ export class GroqService {
       formData.append('model', model);
       formData.append('response_format', 'verbose_json');
       formData.append('temperature', '0.0');
+      formData.append('language', cleanLanguage);
 
       const response = await fetch('https://api.groq.com/openai/v1/audio/transcriptions', {
         method: 'POST',
@@ -101,7 +106,7 @@ export class GroqService {
       // If error occurred (e.g. bad key or network), throw if user explicitly supplied key and wants to know,
       // but return simulated offline transcript if it's a network offline event
       if (!navigator.onLine) {
-        return this.simulateOfflineTranscription(audioBlob);
+        return this.simulateOfflineTranscription(audioBlob, undefined, cleanLanguage);
       }
       throw err;
     }
@@ -359,8 +364,9 @@ Return JSON:
   }
 
   // Fallback / Offline simulators
-  private simulateOfflineTranscription(blob: Blob, fallbackTranscript?: string): GroqTranscriptionResult {
+  private simulateOfflineTranscription(blob: Blob, fallbackTranscript?: string, language: TranscriptionLanguage = 'en'): GroqTranscriptionResult {
     const text = (fallbackTranscript || '').trim();
+    const cleanLanguage: TranscriptionLanguage = language === 'hi' ? 'hi' : 'en';
     if (text) {
       // Split into realistic sentence chunks
       const rawSentences = text
@@ -387,7 +393,7 @@ Return JSON:
 
       return {
         fullTranscript: text,
-        language: 'en',
+        language: cleanLanguage,
         duration: Math.max(approxDuration, Math.round(currentSec)),
         segments,
       };
@@ -397,7 +403,7 @@ Return JSON:
     const duration = Math.max(2, Math.round(blob.size / 32000));
     return {
       fullTranscript: '',
-      language: 'en',
+      language: cleanLanguage,
       duration,
       segments: [],
     };

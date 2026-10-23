@@ -39,6 +39,7 @@ export const SettingsView: React.FC = () => {
 
   const [groqKey, setGroqKey] = useState(settings.groqApiKey || '');
   const [transcriptionModel, setTranscriptionModel] = useState(settings.transcriptionModel || 'whisper-large-v3-turbo');
+  const [transcriptionLanguage, setTranscriptionLanguage] = useState<'en' | 'hi'>(settings.transcriptionLanguage || 'en');
   const [summarizationModel, setSummarizationModel] = useState(settings.summarizationModel || 'openai/gpt-oss-120b');
   const [autoFile, setAutoFile] = useState(settings.autoFileHighConfidence);
   const [confidenceThreshold, setConfidenceThreshold] = useState(settings.confidenceThreshold || 0.85);
@@ -71,6 +72,7 @@ export const SettingsView: React.FC = () => {
       ...settings,
       groqApiKey: groqKey.trim(),
       transcriptionModel,
+      transcriptionLanguage,
       summarizationModel,
       autoFileHighConfidence: autoFile,
       confidenceThreshold,
@@ -214,6 +216,24 @@ export const SettingsView: React.FC = () => {
                 <option value="llama-3.3-70b-versatile">llama-3.3-70b-versatile (Fast 70B)</option>
                 <option value="llama3-70b-8192">llama3-70b-8192</option>
               </select>
+            </div>
+
+            <div className="space-y-1 sm:col-span-2">
+              <label className="text-[11px] font-medium text-stone-500 flex items-center justify-between">
+                <span>Transcription Language</span>
+                <span className="text-[10px] text-amber-600 dark:text-amber-400 font-semibold">Strictly English & Hindi only</span>
+              </label>
+              <select
+                value={transcriptionLanguage}
+                onChange={(e) => setTranscriptionLanguage(e.target.value as 'en' | 'hi')}
+                className="w-full px-3 py-2 text-xs rounded-lg bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 text-stone-800 dark:text-stone-200 hover:border-stone-300 dark:hover:border-stone-600 focus:outline-hidden focus:ring-1 focus:ring-amber-500/50 transition-colors cursor-pointer"
+              >
+                <option value="en">English (en)</option>
+                <option value="hi">Hindi (hi - हिंदी)</option>
+              </select>
+              <p className="text-[10px] text-stone-400">
+                Transcriber only operates in English or Hindi. Any other languages are rejected.
+              </p>
             </div>
           </div>
 
