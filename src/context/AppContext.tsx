@@ -556,6 +556,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       awaitCompletion?: boolean;
       durationSeconds?: number;
       fallbackTranscript?: string;
+      language?: TranscriptionLanguage;
       onProgress?: (step: string) => void;
     }
   ): Promise<{ recording: Recording; note: Note }> => {

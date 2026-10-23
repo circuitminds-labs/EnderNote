@@ -39,24 +39,42 @@ const MainContent: React.FC = () => {
   });
   const [askNotesModalOpen, setAskNotesModalOpen] = useState(false);
   const [recordModalOpen, setRecordModalOpen] = useState(false);
+  const [isRecordMinimized, setIsRecordMinimized] = useState(false);
+  const [recordState, setRecordState] = useState<'idle' | 'recording' | 'paused' | 'processing' | 'done'>('idle');
   const [aboutModalOpen, setAboutModalOpen] = useState(false);
   const aboutTriggerRef = useRef<HTMLButtonElement | null>(null);
 
   const isPlayerActive = Boolean(player.currentRecording);
+
+  const handleOpenAskNotes = () => {
+    // If recording is active, minimize Voice Studio to bottom-center capsule instead of canceling
+    if (recordModalOpen && (recordState === 'recording' || recordState === 'paused' || recordState === 'processing')) {
+      setIsRecordMinimized(true);
+    } else {
+      setRecordModalOpen(false);
+    }
+    setAskNotesModalOpen(true);
+  };
+
+  const handleOpenRecordModal = () => {
+    setRecordModalOpen(true);
+    setIsRecordMinimized(false);
+    setAskNotesModalOpen(false);
+  };
 
   const renderActiveView = () => {
     switch (activeView) {
       case 'home':
         return (
           <DashboardView 
-            onOpenAskNotes={() => setAskNotesModalOpen(true)} 
-            onOpenRecordModal={() => setRecordModalOpen(true)}
+            onOpenAskNotes={handleOpenAskNotes} 
+            onOpenRecordModal={handleOpenRecordModal}
           />
         );
       case 'inbox':
         return <InboxView />;
       case 'notes':
-        return <NotesListView onOpenRecordModal={() => setRecordModalOpen(true)} />;
+        return <NotesListView onOpenRecordModal={handleOpenRecordModal} />;
       case 'note_detail':
         return <NoteDetailView />;
       case 'projects':
@@ -64,7 +82,7 @@ const MainContent: React.FC = () => {
       case 'tasks':
         return <TasksView />;
       case 'audio_library':
-        return <AudioLibraryView onOpenRecordModal={() => setRecordModalOpen(true)} />;
+        return <AudioLibraryView onOpenRecordModal={handleOpenRecordModal} />;
       case 'knowledge_graph':
         return <KnowledgeGraphView />;
       case 'archive':
@@ -76,8 +94,8 @@ const MainContent: React.FC = () => {
       default:
         return (
           <DashboardView 
-            onOpenAskNotes={() => setAskNotesModalOpen(true)} 
-            onOpenRecordModal={() => setRecordModalOpen(true)}
+            onOpenAskNotes={handleOpenAskNotes} 
+            onOpenRecordModal={handleOpenRecordModal}
           />
         );
     }
@@ -124,13 +142,15 @@ const MainContent: React.FC = () => {
         isPlayerActive={isPlayerActive}
       />
 
-      {/* Permanent Floating Action Group: [ Record Voice ] [ Ask My Notes ] */}
+      {/* Permanent Floating Action Group: [ Record Voice ] [ Ask My Notes ] firmly anchored at bottom-right */}
       <FloatingActionGroup
-        onOpenAskNotes={() => setAskNotesModalOpen(true)}
-        onOpenRecordModal={() => setRecordModalOpen(true)}
+        onOpenAskNotes={handleOpenAskNotes}
+        onOpenRecordModal={handleOpenRecordModal}
         isPlayerActive={isPlayerActive}
-        isModalOpen={recordModalOpen || aboutModalOpen}
+        isModalOpen={aboutModalOpen}
         isChatOpen={askNotesModalOpen}
+        isRecordActive={recordModalOpen && (recordState === 'recording' || recordState === 'paused' || recordState === 'processing')}
+        isRecordExpanded={recordModalOpen && !isRecordMinimized && recordState !== 'idle'}
       />
 
       {/* Floating persistent audio player */}
@@ -138,10 +158,18 @@ const MainContent: React.FC = () => {
         <AudioPlayerBar sidebarOpen={sidebarOpen} />
       </ErrorBoundary>
 
-      {/* In-App Live Voice Recording & AI Studio Modal */}
+      {/* In-App Live Voice Recording & AI Studio Panel */}
       <RecordModal
         isOpen={recordModalOpen}
-        onClose={() => setRecordModalOpen(false)}
+        onClose={() => {
+          setRecordModalOpen(false);
+          setIsRecordMinimized(false);
+          setRecordState('idle');
+        }}
+        isPlayerActive={isPlayerActive}
+        isMinimized={isRecordMinimized}
+        onToggleMinimize={setIsRecordMinimized}
+        onRecordingStateChange={setRecordState}
       />
 
       {/* Floating Ask My Notes AI Chatbot */}

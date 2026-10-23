@@ -56,6 +56,8 @@ interface FloatingActionGroupProps {
   isPlayerActive: boolean;
   isModalOpen?: boolean;
   isChatOpen?: boolean;
+  isRecordActive?: boolean;
+  isRecordExpanded?: boolean;
 }
 
 export const FloatingActionGroup: React.FC<FloatingActionGroupProps> = ({
@@ -64,43 +66,50 @@ export const FloatingActionGroup: React.FC<FloatingActionGroupProps> = ({
   isPlayerActive,
   isModalOpen = false,
   isChatOpen = false,
+  isRecordActive = false,
+  isRecordExpanded = false,
 }) => {
-  if (isChatOpen) {
-    // When the chat window is expanded, the Ask My Notes launcher is replaced by the floating chat interface.
-    // On desktop, shift Record Voice to the left of the chat window (right: 444px).
-    // On mobile, keep Record Voice accessible if the chat is minimized or closing.
+  // If either panel is expanded on the right dock, do not show duplicate FAB behind it
+  if (isChatOpen || isRecordExpanded) {
+    return null;
+  }
+
+  // When Voice Studio is actively recording and MINIMIZED in the bottom-center capsule:
+  // Render ONLY the Ask My Notes button, securely and predictably anchored at bottom-right!
+  if (isRecordActive) {
     return (
       <div
-        className={`fab-group ${isPlayerActive ? 'fab-group-player' : ''} transition-[bottom,right,transform,opacity] duration-300 pointer-events-auto select-none sm:!right-[444px] ${
+        className={`fab-group ${isPlayerActive ? 'fab-group-player' : ''} pointer-events-auto select-none ${
           isModalOpen ? 'opacity-30 pointer-events-none' : 'opacity-100'
         }`}
         role="region"
-        aria-label="Quick voice recording action"
+        aria-label="Ask My Notes launcher"
       >
         <FloatingActionButton
-          onClick={onOpenRecordModal}
-          label="Record Voice"
-          ariaLabel="Record Voice"
-          title="Record Voice: live transcription and automatic summarization"
-          variant="primary"
-          textClassName="font-semibold text-xs sm:text-sm text-white"
+          onClick={onOpenAskNotes}
+          label="Ask My Notes"
+          ariaLabel="Ask My Notes"
+          title="Ask My Notes: synthesize answers across your voice library"
+          variant="secondary"
+          textClassName="font-medium text-xs sm:text-sm text-stone-800 dark:text-stone-100"
           icon={
-            <Mic className="w-5 h-5 shrink-0 animate-pulse group-hover:scale-110 group-focus-visible:scale-110 transition-transform text-white" />
+            <Sparkles className="w-5 h-5 text-amber-500 dark:text-amber-400 shrink-0 group-hover:scale-110 group-focus-visible:scale-110 transition-transform" />
           }
         />
       </div>
     );
   }
 
+  // Default idle state: Both Record Voice and Ask My Notes side-by-side, anchored at bottom-right
   return (
     <div
-      className={`fab-group ${isPlayerActive ? 'fab-group-player' : ''} flex items-center gap-2 sm:gap-3 transition-[bottom,right,transform,opacity] duration-300 pointer-events-auto select-none ${
+      className={`fab-group ${isPlayerActive ? 'fab-group-player' : ''} flex items-center gap-2 sm:gap-3 pointer-events-auto select-none ${
         isModalOpen ? 'opacity-30 pointer-events-none' : 'opacity-100'
       }`}
       role="region"
       aria-label="Quick voice recording and AI assistance actions"
     >
-      {/* 1. Record Voice Button (Primary action - on the left) */}
+      {/* 1. Record Voice Button (Primary action) */}
       <FloatingActionButton
         onClick={onOpenRecordModal}
         label="Record Voice"
@@ -113,7 +122,7 @@ export const FloatingActionGroup: React.FC<FloatingActionGroupProps> = ({
         }
       />
 
-      {/* 2. Ask My Notes Button (Secondary action - on the right) */}
+      {/* 2. Ask My Notes Button (Secondary action) */}
       <FloatingActionButton
         onClick={onOpenAskNotes}
         label="Ask My Notes"
@@ -128,4 +137,3 @@ export const FloatingActionGroup: React.FC<FloatingActionGroupProps> = ({
     </div>
   );
 };
-
