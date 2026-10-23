@@ -3,16 +3,16 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content" />
-    <title>Awaaz - Local-First AI Voice Notes</title>
+    <title>EnderNote - Local-First AI Voice Notes</title>
     <meta name="description" content="Offline-capable companion for ESP32 and browser voice notes with AI transcription, smart organizer, audio bookmarks, and knowledge graph." />
-    <meta property="og:title" content="Awaaz - Local-First AI Voice Notes" />
+    <meta property="og:title" content="EnderNote - Local-First AI Voice Notes" />
     <meta property="og:description" content="Offline-capable companion for ESP32 and browser voice notes with AI transcription, smart organizer, audio bookmarks, and knowledge graph." />
     <meta property="og:type" content="website" />
     <meta name="twitter:card" content="summary_large_image" />
     <script>
       (function() {
         try {
-          var saved = localStorage.getItem('auranote_theme');
+          var saved = localStorage.getItem('endernote_theme') || localStorage.getItem('auranote_theme');
           var isDark = saved === 'dark' || (!saved && true);
           if (saved === 'light') isDark = false;
           if (isDark) {

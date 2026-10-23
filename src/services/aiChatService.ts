@@ -156,7 +156,7 @@ export function generateLocalGroundedAnswer(
   if (/summar(y|ize)|latest note|recent note|overview of note/i.test(q)) {
     if (relevantNotes.length === 0) {
       return {
-        answer: "You don't have any notes saved in AuraNote yet. Record your first voice note using the **Record Voice** button!",
+        answer: "You don't have any notes saved in EnderNote yet. Record your first voice note using the **Record Voice** button!",
         citations: [],
       };
     }
@@ -266,7 +266,7 @@ export function generateLocalGroundedAnswer(
   if (/discuss|talk about|meeting|conversation|what did i/i.test(q)) {
     if (relevantNotes.length === 0) {
       return {
-        answer: "No recent discussions found. Once you record voice notes, AuraNote transcribes and catalogs them here.",
+        answer: "No recent discussions found. Once you record voice notes, EnderNote transcribes and catalogs them here.",
         citations: [],
       };
     }

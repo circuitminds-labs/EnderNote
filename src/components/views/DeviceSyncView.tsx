@@ -101,6 +101,7 @@ export const DeviceSyncView: React.FC = () => {
   useEffect(() => {
     checkDevice();
     runDiagnosis();
+    fetchFiles();
   }, [deviceIp]);
 
   // Poll cleanup on unmount
@@ -111,15 +112,23 @@ export const DeviceSyncView: React.FC = () => {
   }, []);
 
   const runDiagnosis = async () => {
-    const diag = await esp32Service.checkConnectionDiagnosis(deviceIp);
-    setDiagnosis(diag);
+    try {
+      const diag = await esp32Service.checkConnectionDiagnosis(deviceIp);
+      setDiagnosis(diag);
+    } catch (e) {
+      console.warn('Diagnosis warning:', e);
+    }
   };
 
   const checkDevice = async () => {
-    const info = await esp32Service.checkConnection(deviceIp);
-    setDeviceInfo(info);
-    if (info.status === 'connected' && pairedToken) {
-      fetchFiles();
+    try {
+      const info = await esp32Service.checkConnection(deviceIp);
+      setDeviceInfo(info);
+      if (info.status === 'connected') {
+        fetchFiles();
+      }
+    } catch (e) {
+      console.warn('checkDevice warning:', e);
     }
   };
 
@@ -289,7 +298,7 @@ export const DeviceSyncView: React.FC = () => {
     });
 
     setPairingStatusText('Pairing Approved! Device Connected.');
-    fetchFiles(deviceIp, token);
+    fetchFiles(deviceIp);
     setTimeout(() => {
       setIsPairingModalOpen(false);
       checkDevice();
@@ -315,11 +324,10 @@ export const DeviceSyncView: React.FC = () => {
     setIsLoadingFiles(true);
     setFetchFilesError(null);
     const targetIp = (ipToUse || deviceIp || '192.168.4.1').trim().replace(/^https?:\/\//, '').replace(/\/$/, '');
-    const activeToken = token !== undefined ? token : (pairedToken || undefined);
 
     try {
       // Constraint 1: Absolute URL explicitly using ESP32's IP address
-      const url = `http://${targetIp}/files${activeToken ? `?token=${encodeURIComponent(activeToken)}` : ''}`;
+      const url = `http://${targetIp}/files`;
 
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
@@ -328,7 +336,6 @@ export const DeviceSyncView: React.FC = () => {
         method: 'GET',
         headers: {
           Accept: 'application/json',
-          ...(activeToken ? { Authorization: `Bearer ${activeToken}` } : {}),
         },
         signal: controller.signal,
       });
@@ -341,10 +348,8 @@ export const DeviceSyncView: React.FC = () => {
       // Constraint 2: Direct Array Parsing
       // The ESP32 returns a raw, flat JSON array for the files list: [{"name":"REC0005.WAV","size":183852,"durationSec":5}, ...].
       // Ensure state parsing maps directly over this array without looking for response.data or response.files.
-      const rawData = await res.json();
-      const filesArray = Array.isArray(rawData)
-        ? rawData
-        : (Array.isArray((rawData as any)?.files) ? (rawData as any).files : (Array.isArray((rawData as any)?.data) ? (rawData as any).data : []));
+      const data = await res.json();
+      const filesArray = Array.isArray(data) ? data : [];
 
       const parsedFiles: Esp32FileItem[] = filesArray.map((file: any) => {
         const name = file.name || file.filename || 'UNKNOWN.WAV';
@@ -370,7 +375,7 @@ export const DeviceSyncView: React.FC = () => {
     } catch (err: any) {
       console.warn('Direct fetch from http://' + targetIp + '/files failed, trying fallback:', err);
       try {
-        const serviceFiles = await esp32Service.fetchFiles(targetIp, activeToken, timeoutMs);
+        const serviceFiles = await esp32Service.fetchFiles(targetIp, token, timeoutMs);
         setFiles(serviceFiles);
         setSelectedFilenames(serviceFiles.map(f => f.name || f.filename));
         return serviceFiles;
@@ -1241,7 +1246,7 @@ export const DeviceSyncView: React.FC = () => {
                 </div>
                 <div>
                   <h3 className="text-base font-bold text-stone-900 dark:text-stone-100">
-                    Running AuraNote Locally on Your Computer
+                    Running EnderNote Locally on Your Computer
                   </h3>
                   <p className="text-xs text-stone-400">
                     Run on http://localhost:3000 to connect directly to your ESP32 with zero browser restrictions

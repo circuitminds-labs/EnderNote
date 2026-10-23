@@ -81,7 +81,7 @@ TRANSCRIPT SNIPPET: ${(n.transcriptSnippet || '').slice(0, 1200)}
       return `- ${p.name}: ${p.description}`;
     }).join('\n');
 
-    const systemInstruction = `You are "Ask My Notes", the official AI personal knowledge assistant for AuraNote.
+    const systemInstruction = `You are "Ask My Notes", the official AI personal knowledge assistant for EnderNote.
 Your job is to answer user questions grounded strictly in the user's voice notes, transcripts, projects, and action items.
 
 GROUNDING RULES:
@@ -183,7 +183,7 @@ async function start() {
   }
 
   app.listen(PORT, '0.0.0.0', () => {
-    console.log(`AuraNote server running on http://0.0.0.0:${PORT}`);
+    console.log(`EnderNote server running on http://0.0.0.0:${PORT}`);
   });
 }
 

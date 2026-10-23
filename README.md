@@ -1,4 +1,4 @@
-# AuraNote — Local-First AI Voice Notes Companion & Studio
+# EnderNote — Local-First AI Voice Notes Companion & Studio
 
 A production-minded, offline-first personal web application and companion for voice note-taking with both **Direct In-App Voice Recording** and **ESP32 Voice Notes Hardware Synchronization** (ESP32-DevKit V1 + INMP441 I²S microphone + SPI MicroSD card reader + 0.96" SSD1306 OLED display + push buttons).
 

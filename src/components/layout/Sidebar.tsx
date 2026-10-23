@@ -132,15 +132,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
               if (onOpenAbout) onOpenAbout();
             }}
             className="flex items-center gap-2.5 min-w-0 pr-2 py-1 px-1.5 -ml-1.5 rounded-xl text-left hover:bg-stone-200/70 dark:hover:bg-stone-800/70 active:scale-[0.98] transition-all cursor-pointer group focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-amber-500/70 dark:focus-visible:ring-amber-400/70"
-            title="About AuraNote"
-            aria-label="About AuraNote - Click for app information and features"
+            title="About EnderNote"
+            aria-label="About EnderNote - Click for app information and features"
           >
             <div className="w-8 h-8 rounded-lg bg-stone-900 dark:bg-stone-100 flex items-center justify-center text-stone-100 dark:text-stone-900 shadow-xs shrink-0 group-hover:scale-105 transition-transform">
-              <span className="font-bold text-sm tracking-tight">AN</span>
+              <span className="font-bold text-sm tracking-tight">EN</span>
             </div>
             <div className="min-w-0">
               <div className="font-semibold text-sm tracking-tight text-stone-900 dark:text-stone-100 truncate group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
-                AuraNote
+                EnderNote
               </div>
               <div className="text-[11px] text-stone-500 dark:text-stone-400 truncate">
                 ESP32 Local Companion

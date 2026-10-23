@@ -125,7 +125,7 @@ export class GroqService {
       const projectCatalog = existingProjects.map(p => `"${p.name}": ${p.description}`).join('; ');
       const knownTags = existingTags.slice(0, 30).join(', ');
 
-      const systemPrompt = `You are the executive intelligence for AuraNote, a local-first personal voice-note organizer.
+      const systemPrompt = `You are the executive intelligence for EnderNote, a local-first personal voice-note organizer.
 Analyze the provided transcript and produce a strictly valid JSON object conforming to this schema:
 {
   "title": "A crisp, informative, human title (max 7 words)",
@@ -330,7 +330,7 @@ Return strictly raw JSON conforming to:
           messages: [
             {
               role: 'system',
-              content: `You are AuraNote Knowledge Assistant. Ground your answer strictly in the provided notes.
+              content: `You are EnderNote Knowledge Assistant. Ground your answer strictly in the provided notes.
 Never hallucinate facts. If the evidence is insufficient, state that directly.
 Return JSON:
 {

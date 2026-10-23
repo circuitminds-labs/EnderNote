@@ -181,11 +181,11 @@ export const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose, trigger
         <div className="px-6 py-4.5 border-b border-stone-200/80 dark:border-stone-800/80 flex items-center justify-between bg-stone-50/70 dark:bg-stone-950/40">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-stone-900 dark:bg-stone-100 flex items-center justify-center text-stone-100 dark:text-stone-900 shadow-xs shrink-0">
-              <span className="font-bold text-sm tracking-tight">AN</span>
+              <span className="font-bold text-sm tracking-tight">EN</span>
             </div>
             <div>
               <h2 id="about-dialog-title" className="text-base font-semibold text-stone-900 dark:text-stone-100 leading-tight">
-                About AuraNote
+                About EnderNote
               </h2>
               <p className="text-xs text-amber-600 dark:text-amber-400 font-medium mt-0.5">
                 Your voice, your knowledge, your workspace.
@@ -210,7 +210,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose, trigger
           {/* Introduction Paragraph */}
           <div className="bg-stone-50 dark:bg-stone-800/40 border border-stone-200/70 dark:border-stone-800/70 rounded-xl p-4">
             <p id="about-dialog-description" className="text-xs sm:text-[13px] text-stone-600 dark:text-stone-300 leading-relaxed">
-              AuraNote is a local-first voice notes and knowledge management application designed to turn audio recordings into searchable, organized, and actionable knowledge. Built with ESP32 integration in mind, AuraNote brings voice capture, synchronized transcripts, and knowledge organization together in one workspace.
+              EnderNote is a local-first voice notes and knowledge management application designed to turn audio recordings into searchable, organized, and actionable knowledge. Built with ESP32 integration in mind, EnderNote brings voice capture, synchronized transcripts, and knowledge organization together in one workspace.
             </p>
           </div>
 
@@ -266,7 +266,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose, trigger
           <div className="flex items-center gap-2 text-stone-500 dark:text-stone-400">
             <span className="inline-flex items-center gap-1.5 font-medium text-stone-700 dark:text-stone-300">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-              AuraNote v1.2.0
+              EnderNote v1.2.0
             </span>
             <span className="text-stone-300 dark:text-stone-700">·</span>
             <span className="text-[11px] text-stone-500 dark:text-stone-400">Local-First Architecture</span>

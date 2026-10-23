@@ -1,5 +1,5 @@
 {
-  "name": "Awaaz",
+  "name": "EnderNote",
   "description": "Offline-capable companion for ESP32 and browser voice notes with AI transcription, smart organizer, audio bookmarks, and knowledge graph.",
   "requestFramePermissions": [
     "microphone"

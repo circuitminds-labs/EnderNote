@@ -151,7 +151,7 @@ const MainContent: React.FC = () => {
         isPlayerActive={isPlayerActive}
       />
 
-      {/* Centered About AuraNote Modal */}
+      {/* Centered About EnderNote Modal */}
       <AboutModal
         isOpen={aboutModalOpen}
         onClose={() => setAboutModalOpen(false)}

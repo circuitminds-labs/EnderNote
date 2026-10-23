@@ -324,7 +324,7 @@ export class Esp32Service {
   async fetchFiles(ip: string, token?: string, timeoutMs: number = 10000): Promise<Esp32FileItem[]> {
     const cleanIp = this.getCleanIp(ip);
     const isHttps = typeof window !== 'undefined' && window.location.protocol === 'https:';
-    const url = `http://${cleanIp}/files${token ? `?token=${encodeURIComponent(token)}` : ''}`;
+    const url = `http://${cleanIp}/files`;
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => {
@@ -336,7 +336,6 @@ export class Esp32Service {
         method: 'GET',
         headers: {
           Accept: 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         signal: controller.signal,
       });
@@ -347,11 +346,9 @@ export class Esp32Service {
       }
 
       const rawFiles = await res.json();
-      if (!Array.isArray(rawFiles)) {
-        throw new Error('ESP32 /files response is not a JSON array');
-      }
+      const filesArray = Array.isArray(rawFiles) ? rawFiles : [];
 
-      return rawFiles.map((f: any) => {
+      return filesArray.map((f: any) => {
         const name = f.name || f.filename || 'UNKNOWN.WAV';
         const size = typeof f.size === 'number' ? f.size : (f.fileSizeBytes || 0);
         const durationSec = typeof f.durationSec === 'number' 
@@ -419,46 +416,60 @@ export class Esp32Service {
     onProgress: (bytesReceived: number, totalBytes: number, percent: number) => void
   ): Promise<Blob> {
     const cleanIp = this.getCleanIp(ip);
-    const url = `http://${cleanIp}/api/sync/download?file=${encodeURIComponent(
-      filename
-    )}&idx=${currentIndex}&total=${totalFiles}&token=${encodeURIComponent(token)}`;
+    
+    // Candidate absolute URLs on the ESP32 (without CORS-blocking custom headers)
+    const candidateUrls = [
+      `http://${cleanIp}/audio?file=${encodeURIComponent(filename)}`,
+      `http://${cleanIp}/api/sync/download?file=${encodeURIComponent(filename)}&idx=${currentIndex}&total=${totalFiles}`,
+    ];
 
-    const response = await fetch(url, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    let response: Response | null = null;
+    let lastError: any = null;
 
-    if (!response.ok) {
-      throw new Error(`Failed to download ${filename} from ESP32 at http://${cleanIp} (HTTP ${response.status}: ${response.statusText})`);
-    }
-
-    if (!response.body) {
-      throw new Error(`Download response for ${filename} did not contain a readable stream body.`);
-    }
-
-    const contentLengthHeader = response.headers.get('Content-Length');
-    const totalBytes = contentLengthHeader ? parseInt(contentLengthHeader, 10) : 0;
-    const reader = response.body.getReader();
-    const chunks: Uint8Array[] = [];
-    let bytesReceived = 0;
-
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-
-      if (value) {
-        chunks.push(value);
-        bytesReceived += value.length;
-        const pct = totalBytes > 0 
-          ? Math.min(100, Math.round((bytesReceived / totalBytes) * 100))
-          : 0;
-        onProgress(bytesReceived, totalBytes, pct);
+    for (const url of candidateUrls) {
+      try {
+        const res = await fetch(url);
+        if (res.ok) {
+          response = res;
+          break;
+        }
+      } catch (e: any) {
+        lastError = e;
       }
     }
 
-    onProgress(bytesReceived, totalBytes || bytesReceived, 100);
-    return new Blob(chunks as BlobPart[], { type: 'audio/wav' });
+    if (!response || !response.ok) {
+      throw new Error(lastError?.message || `Failed to download ${filename} from ESP32 at http://${cleanIp}`);
+    }
+
+    if (response.body) {
+      const contentLengthHeader = response.headers.get('Content-Length');
+      const totalBytes = contentLengthHeader ? parseInt(contentLengthHeader, 10) : 0;
+      const reader = response.body.getReader();
+      const chunks: Uint8Array[] = [];
+      let bytesReceived = 0;
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        if (value) {
+          chunks.push(value);
+          bytesReceived += value.length;
+          const pct = totalBytes > 0 
+            ? Math.min(100, Math.round((bytesReceived / totalBytes) * 100))
+            : 0;
+          onProgress(bytesReceived, totalBytes, pct);
+        }
+      }
+
+      onProgress(bytesReceived, totalBytes || bytesReceived, 100);
+      return new Blob(chunks as BlobPart[], { type: 'audio/wav' });
+    } else {
+      const blob = await response.blob();
+      onProgress(blob.size, blob.size, 100);
+      return blob;
+    }
   }
 
   /**
@@ -479,7 +490,6 @@ export class Esp32Service {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({ status: 'complete', timestamp: Date.now() }),
       });
@@ -546,7 +556,7 @@ export class Esp32Service {
   getFirmwareSketchCode(): string {
     return `/**
  * =========================================================================
- * AuraNote / NotesMaker ESP32 Production Firmware
+ * EnderNote / NotesMaker ESP32 Production Firmware
  * =========================================================================
  * Hardware Configuration:
  *  - Board: ESP32 Dev Module / ESP32-WROOM-32
@@ -665,7 +675,7 @@ void setupWebServer() {
     StaticJsonDocument<384> doc;
     doc["ip"] = WiFi.getMode() == WIFI_AP ? WiFi.softAPIP().toString() : WiFi.localIP().toString();
     doc["status"] = "connected";
-    doc["firmwareVersion"] = "AuraNote-ESP32-v2.5";
+    doc["firmwareVersion"] = "EnderNote-ESP32-v2.5";
     
     uint64_t totalBytes = SD.totalBytes();
     uint64_t usedBytes = SD.usedBytes();
@@ -801,7 +811,7 @@ void setupWebServer() {
   // 3. Completion Notification to clear screen
   server.on("/api/sync/complete", HTTP_POST, []() {
     setCorsHeaders();
-    drawOledStatus("AuraNote Ready", "Sync Complete!", "Device Ready");
+    drawOledStatus("EnderNote Ready", "Sync Complete!", "Device Ready");
     server.send(200, "application/json", "{\\"status\\":\\"ok\\"}");
   });
 

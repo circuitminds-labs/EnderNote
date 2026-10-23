@@ -609,7 +609,7 @@ export const AskNotesChatbot: React.FC<AskNotesChatbotProps> = ({
                   
                   <div className="space-y-1.5">
                     <h4 className="text-sm font-semibold text-stone-900 dark:text-stone-100">
-                      Hey! I'm your AuraNote AI.
+                      Hey! I'm your EnderNote AI.
                     </h4>
                     <p className="text-xs text-stone-600 dark:text-stone-300 leading-relaxed">
                       I can help you find information in your voice notes, summarize recordings, organize your thoughts, and track action items.
@@ -705,7 +705,7 @@ export const AskNotesChatbot: React.FC<AskNotesChatbotProps> = ({
                                       type="button"
                                       onClick={() => handleCitationClick(c.noteId)}
                                       className="text-stone-400 hover:text-stone-700 dark:text-stone-400 dark:hover:text-stone-200 cursor-pointer"
-                                      title="Open note in AuraNote"
+                                      title="Open note in EnderNote"
                                     >
                                       <ExternalLink className="w-3 h-3" />
                                     </button>

@@ -44,7 +44,7 @@ export const TasksView: React.FC = () => {
       const res = await Notification.requestPermission();
       setNotificationPermission(res);
       if (res === 'granted') {
-        new Notification('AuraNote Reminders Active', {
+        new Notification('EnderNote Reminders Active', {
           body: 'Browser notifications configured for voice-note action items.',
         });
       }

@@ -95,7 +95,7 @@ export const SettingsView: React.FC = () => {
     try {
       const zipBlob = await backupService.exportFullZipBackup();
       const dateStr = new Date().toISOString().split('T')[0];
-      downloadBlob(zipBlob, `AuraNote_Full_Backup_${dateStr}.zip`);
+      downloadBlob(zipBlob, `EnderNote_Full_Backup_${dateStr}.zip`);
     } finally {
       setIsExporting(false);
     }
@@ -107,7 +107,7 @@ export const SettingsView: React.FC = () => {
     try {
       const jsonBlob = await backupService.exportMetadataJson();
       const dateStr = new Date().toISOString().split('T')[0];
-      downloadBlob(jsonBlob, `AuraNote_Metadata_${dateStr}.json`);
+      downloadBlob(jsonBlob, `EnderNote_Metadata_${dateStr}.json`);
     } finally {
       setIsExporting(false);
     }
@@ -407,7 +407,7 @@ export const SettingsView: React.FC = () => {
         </div>
 
         <p className="text-xs text-stone-500 dark:text-stone-400">
-          Because AuraNote is local-first, backups are your personal lifeline. Export full ZIP packages containing structured metadata, transcripts, and all original audio binaries.
+          Because EnderNote is local-first, backups are your personal lifeline. Export full ZIP packages containing structured metadata, transcripts, and all original audio binaries.
         </p>
 
         {/* Restore Result Message */}

@@ -118,7 +118,7 @@ export const Header: React.FC<HeaderProps> = ({
     settings: 'Settings',
   };
 
-  const currentTitle = viewTitles[activeView] || 'AuraNote';
+  const currentTitle = viewTitles[activeView] || 'EnderNote';
 
   return (
     <header className="h-14 sm:h-16 px-3 sm:px-6 lg:px-8 border-b border-stone-200/80 dark:border-stone-800/80 bg-stone-50/90 dark:bg-stone-950/90 backdrop-blur-md flex items-center justify-between gap-2 sm:gap-4 sticky top-0 z-30 pt-[env(safe-area-inset-top)] select-none">
